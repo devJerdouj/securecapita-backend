@@ -1,7 +1,6 @@
 package com.jerdouj.secureCapita.repository;
 
 import com.jerdouj.secureCapita.domain.Role;
-import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 
@@ -17,6 +16,7 @@ public interface RoleRepository<T extends Role> {
 
     /* More specific operations */
     void addRoleToUser(Long userId, String roleName);
+    Role getRoleByUserId(Long userId);
     Role getRoleById(Long id);
     Role getRoleByEmail(String email);
     void updateUserRole(Long userId, String roleName);

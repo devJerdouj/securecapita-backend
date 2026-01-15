@@ -5,4 +5,7 @@ import com.jerdouj.secureCapita.dto.UserDTO;
 
 public interface UserService {
     UserDTO createUser (User user);
+    UserDTO getUserByEmail (String email);
+
+    void sendMfaCode(UserDTO user);
 }

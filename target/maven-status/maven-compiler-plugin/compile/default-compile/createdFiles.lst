@@ -1,0 +1,15 @@
+com\jerdouj\secureCapita\rowmapper\RoleRowMapper.class
+com\jerdouj\secureCapita\repository\implementation\RoleRepositoryImpl.class
+com\jerdouj\secureCapita\SecureCapitaApplication.class
+com\jerdouj\secureCapita\domain\Role$RoleBuilder.class
+com\jerdouj\secureCapita\resource\UserResource.class
+com\jerdouj\secureCapita\service\UserService.class
+com\jerdouj\secureCapita\repository\UserRepository.class
+com\jerdouj\secureCapita\domain\User$UserBuilderImpl.class
+com\jerdouj\secureCapita\repository\RoleRepository.class
+com\jerdouj\secureCapita\domain\Role$RoleBuilderImpl.class
+com\jerdouj\secureCapita\domain\HttpResponse$HttpResponseBuilderImpl.class
+com\jerdouj\secureCapita\domain\HttpResponse$HttpResponseBuilder.class
+com\jerdouj\secureCapita\domain\User$UserBuilder.class
+com\jerdouj\secureCapita\repository\implementation\UserRepositoryImpl.class
+com\jerdouj\secureCapita\service\implementation\UserServiceImpl.class

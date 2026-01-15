@@ -6,10 +6,10 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class RoleRowMapper implements RowMapper {
+public class RoleRowMapper implements RowMapper<Role> {
 
     @Override
-    public Object mapRow(ResultSet resultSet, int rowNum) throws SQLException {
+    public Role mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         return Role.builder()
                 .id(resultSet.getLong("id"))
                 .name(resultSet.getString("name"))

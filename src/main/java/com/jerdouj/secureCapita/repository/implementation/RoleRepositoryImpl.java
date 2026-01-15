@@ -13,8 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Collection;
 import java.util.List;
 
-import static com.jerdouj.secureCapita.query.RoleQuery.INSERT_ROLE_TO_USER_QUERY;
-import static com.jerdouj.secureCapita.query.RoleQuery.SELECT_ROLE_BY_Name_QUERY;
+import static com.jerdouj.secureCapita.query.RoleQuery.*;
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 
@@ -75,6 +74,20 @@ public class RoleRepositoryImpl implements RoleRepository<Role>{
 
         }
 
+    }
+
+    @Override
+    public Role getRoleByUserId(Long userId) {
+        log.info("getting role by userId: {}", userId);
+        try {
+            return (Role) jdbc.queryForObject(SELECT_ROLE_BY_USER_ID_QUERY, of("user_id", userId), new RoleRowMapper());
+        } catch (EmptyResultDataAccessException exception) {
+            log.error("No role found for userId: {}", userId);
+            throw new ApiException("No role found for userId: " + userId, exception);
+        } catch (Exception exception) {
+            log.error("Error while retrieving role for userId {}: {}", userId, exception.getMessage(), exception);
+            throw new ApiException("Failed to retrieve role for userId " + userId + ": " + exception.getMessage(), exception);
+        }
     }
 
     @Override

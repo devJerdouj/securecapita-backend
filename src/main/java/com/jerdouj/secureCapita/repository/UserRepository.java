@@ -1,6 +1,7 @@
 package com.jerdouj.secureCapita.repository;
 
 import com.jerdouj.secureCapita.domain.User;
+import com.jerdouj.secureCapita.dto.UserDTO;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -16,5 +17,7 @@ public interface UserRepository<T extends User> {
     Boolean delete(Long id);
 
     /* More specific operations */
+    User getUserByEmail(String email);
 
+    void sendMfaCode(UserDTO user);
 }

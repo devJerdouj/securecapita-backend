@@ -2,44 +2,55 @@ package com.jerdouj.secureCapita.repository.implementation;
 
 import com.jerdouj.secureCapita.domain.Role;
 import com.jerdouj.secureCapita.domain.User;
+import com.jerdouj.secureCapita.domain.UserPrincipal;
+import com.jerdouj.secureCapita.dto.UserDTO;
 import com.jerdouj.secureCapita.exception.ApiException;
 import com.jerdouj.secureCapita.repository.RoleRepository;
 import com.jerdouj.secureCapita.repository.UserRepository;
+import com.jerdouj.secureCapita.rowmapper.UserRowMapper;
+import com.jerdouj.secureCapita.service.verification.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.jerdouj.secureCapita.enumeration.RoleType.ROLE_USER;
 import static com.jerdouj.secureCapita.enumeration.VerificationType.ACCOUNT;
 import static com.jerdouj.secureCapita.query.UserQuery.*;
-
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.time.DateFormatUtils.*;
+import static org.apache.commons.lang3.time.DateUtils.addDays;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserRepositoryImpl implements UserRepository<User> {
+public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
+    private static final String DATE_FORMAT = "yyyy:MM:dd hh:mm:ss";
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -129,4 +140,44 @@ public class UserRepositoryImpl implements UserRepository<User> {
     }
 
 
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = getUserByEmail(email);
+        if (user == null) {
+            log.error("User with email {} not found.", email);
+            throw new UsernameNotFoundException("User with email " + email + " not found.");
+        } else {
+            log.info("User with email {} found: {}", email, user);
+            return new UserPrincipal(user, roleRepository.getRoleByUserId(user.getId()).getPermissions());
+        }
+
+    }
+    @Override
+    public User getUserByEmail(String email) {
+        try {
+            return jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, of("email", email.trim().toLowerCase()), new UserRowMapper());
+        } catch (EmptyResultDataAccessException exception) {
+            log.error("No user found with email: {}", email);
+            return null;
+        } catch (Exception exception) {
+            log.error("Error while retrieving user by email {}: {}", email, exception.getMessage(), exception);
+            throw new ApiException("Failed to retrieve user by email " + email + ": " + exception.getMessage(), exception);
+        }
+    }
+
+    @Override
+    public void sendMfaCode(UserDTO user) {
+    String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
+    String verificationCode = randomAlphabetic(8).toUpperCase();
+        try {
+            jdbc.update(DELETE_VERIFICATION_CODE_BY_USER_ID, of("id", user.getId()));
+            jdbc.update(INSERT_VERIFICATION_CODE_QUERY, of("userId", user.getId(), "code", verificationCode, "expirationDate", expirationDate));
+           // sendSms(user.getPhone(), "From SecureCapital \nYour verification code is:\n" + verificationCode);
+            emailService.sendEmail(user.getEmail(), verificationCode);
+        } catch (Exception exception) {
+            log.error(exception.getMessage(), exception);
+            throw new ApiException("An error occured.Please try again. ");
+        }
+
+    }
 }
